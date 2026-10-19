@@ -105,6 +105,8 @@ public:
     godot::Ref<godot::ImageTexture> GetVideoTexture() const;
     /// The same frame CPU-side. See VideoHandler::GetImage.
     godot::Ref<godot::Image> GetVideoImage() const;
+    uint32_t GetVideoField() const;
+    uint64_t GetVideoFrameSerial() const;
 
     /// Whether the core asked for the controller display interface.
     bool HasControllerScreens() const;
@@ -1019,8 +1021,8 @@ public:
     /// Post-join teardown: handler DeInit, core unload, member reset. Main thread.
     void FinishTeardown();
     void EmulationThreadLoop();
-    void CreateTexture(godot::Image::Format image_format, godot::PackedByteArray pixel_data, int32_t width, int32_t height, bool flip_y);
-    void UpdateTexture(godot::PackedByteArray pixel_data, int32_t width, int32_t height, bool flip_y);
+    void CreateTexture(godot::Image::Format image_format, godot::PackedByteArray pixel_data, int32_t width, int32_t height, bool flip_y, uint32_t field);
+    void UpdateTexture(godot::PackedByteArray pixel_data, int32_t width, int32_t height, bool flip_y, uint32_t field);
 
     bool Shutdown();
 

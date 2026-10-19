@@ -212,6 +212,11 @@ public:
     /// duplicate() it before handing it anywhere that outlives this frame: the
     /// core writes the next frame straight into these same pixels.
     godot::Ref<godot::Image> GetVideoImage() const;
+    /// VRT field extension: enum vrt_field (0 progressive, 1 top, 2 bottom) of
+    /// the frame now in GetVideoTexture(), and a counter that advances once per
+    /// frame that lands there (so a caller can tell new frames and lost ones).
+    int GetVideoField() const;
+    int64_t GetVideoFrameSerial() const;
 
     /// Whether this machine's sound is heard. A console wired to nothing is
     /// silent; it used to be silenced as a side effect of having no screen mesh.

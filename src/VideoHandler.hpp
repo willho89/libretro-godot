@@ -14,6 +14,7 @@
 #include <libretro.h>
 #include "VulkanContext.hpp"
 #include "VideoTransferStats.hpp"
+#include "vrt_libretro_ext.h"
 #include <godot_cpp/variant/dictionary.hpp>
 
 namespace Xenu
@@ -63,8 +64,16 @@ public:
     godot::Ref<godot::Image> GetImage() const { return m_image; }
 
     void SetImageFormat(godot::Image::Format format);
-    void CreateTexture(int32_t width, int32_t height, godot::Image::Format image_format, godot::PackedByteArray pixel_data, bool flip_y);
-    void UpdateTexture(godot::PackedByteArray pixel_data, int32_t width, int32_t height, bool flip_y);
+    void CreateTexture(int32_t width, int32_t height, godot::Image::Format image_format, godot::PackedByteArray pixel_data, bool flip_y, uint32_t field);
+    void UpdateTexture(godot::PackedByteArray pixel_data, int32_t width, int32_t height, bool flip_y, uint32_t field);
+
+    /// VRT_ENVIRONMENT_SET_VIDEO_FIELD (emulation thread). Sticky: tags every
+    /// frame queued after it until the core sets another value.
+    bool SetVideoField(const vrt_video_field* field);
+    /// enum vrt_field of the frame currently in GetTexture(), and a counter that
+    /// advances once per frame landed there. Main-thread only, like GetTexture().
+    uint32_t GetDisplayedField() const { return m_displayed_field; }
+    uint64_t GetFrameSerial() const { return m_frame_serial; }
 
     // Cumulative CPU wall times for transfer stages. Readback wait/copy are
     // subsets of readback_total; texture_update measures the CPU API call, not
@@ -131,6 +140,11 @@ private:
     // by the time a queued frame executes, this has already moved on.
     uint32_t m_last_width = 0;
     uint32_t m_last_height = 0;
+    // Field tag for frames the emulation thread queues next (emulation-thread
+    // state), and what the main thread last put into m_texture.
+    uint32_t m_field = VRT_FIELD_PROGRESSIVE;
+    uint32_t m_displayed_field = VRT_FIELD_PROGRESSIVE;
+    uint64_t m_frame_serial = 0;
     godot::Image::Format m_image_format;
     godot::Ref<godot::Image> m_image = nullptr;
     godot::Ref<godot::ImageTexture> m_texture = nullptr;

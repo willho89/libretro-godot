@@ -11,7 +11,7 @@ class Wrapper;
 class ThreadCommandUpdateTexture : public ThreadCommand
 {
 public:
-    ThreadCommandUpdateTexture(Wrapper* wrapper, godot::PackedByteArray pixelData, int32_t width, int32_t height, bool flipY);
+    ThreadCommandUpdateTexture(Wrapper* wrapper, godot::PackedByteArray pixelData, int32_t width, int32_t height, bool flipY, uint32_t field);
     ~ThreadCommandUpdateTexture() override = default;
 
     void Execute() override;
@@ -26,5 +26,6 @@ private:
     int32_t m_width;
     int32_t m_height;
     bool m_flipY;
+    uint32_t m_field;
 };
 }

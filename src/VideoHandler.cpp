@@ -289,12 +289,12 @@ void VideoHandler::QueueFrame(Wrapper* wrapper, PackedByteArray pixel_data,
         m_last_width = output_width;
         m_last_height = output_height;
         wrapper->CreateTexture(Image::FORMAT_RGBA8, pixel_data,
-            static_cast<int32_t>(output_width), static_cast<int32_t>(output_height), false);
+            static_cast<int32_t>(output_width), static_cast<int32_t>(output_height), false, m_field);
     }
     else
     {
         wrapper->UpdateTexture(pixel_data,
-            static_cast<int32_t>(output_width), static_cast<int32_t>(output_height), false);
+            static_cast<int32_t>(output_width), static_cast<int32_t>(output_height), false, m_field);
     }
 }
 
@@ -346,6 +346,9 @@ retro_proc_address_t VideoHandler::HwRenderGetProcAddress(const char* sym)
 
 void VideoHandler::Init()
 {
+    // Field mode is per run: a core enters it after probing this host.
+    m_field = VRT_FIELD_PROGRESSIVE;
+
     // Nothing to set up for the picture any more. This used to build an emissive
     // material and install it on a mesh the frontend handed over — and, because a
     // material installed once is the last word, everything that later wanted to
@@ -863,7 +866,18 @@ bool VideoHandler::GetPreferredHwRender(retro_hw_context_type* hw_context_type) 
     return true;
 }
 
-void VideoHandler::CreateTexture(int32_t width, int32_t height, Image::Format image_format, PackedByteArray pixel_data, bool flip_y)
+bool VideoHandler::SetVideoField(const vrt_video_field* field)
+{
+    if (field->field > VRT_FIELD_BOTTOM)
+        return false;
+    if (field->field != m_field)
+        Log("VRT video field: " + std::to_string(field->field) + " (" +
+            std::to_string(field->frame_lines) + " frame lines)");
+    m_field = field->field;
+    return true;
+}
+
+void VideoHandler::CreateTexture(int32_t width, int32_t height, Image::Format image_format, PackedByteArray pixel_data, bool flip_y, uint32_t field)
 {
     m_image.instantiate();
     m_image->create(width, height, false, image_format);
@@ -874,6 +888,8 @@ void VideoHandler::CreateTexture(int32_t width, int32_t height, Image::Format im
     // A NEW texture object, which is why a display samples GetTexture() per frame
     // rather than holding on to what it got.
     m_texture = ImageTexture::create_from_image(m_image);
+    m_displayed_field = field;
+    ++m_frame_serial;
 }
 
 godot::Dictionary VideoHandler::GetTransferStats() const
@@ -893,7 +909,7 @@ godot::Dictionary VideoHandler::GetTransferStats() const
     return result;
 }
 
-void VideoHandler::UpdateTexture(PackedByteArray pixel_data, int32_t width, int32_t height, bool flip_y)
+void VideoHandler::UpdateTexture(PackedByteArray pixel_data, int32_t width, int32_t height, bool flip_y, uint32_t field)
 {
     if (m_image.is_null())
         return;
@@ -911,6 +927,10 @@ void VideoHandler::UpdateTexture(PackedByteArray pixel_data, int32_t width, int3
         m_image->flip_y();
 
     if (!m_image->is_empty() && m_texture.is_valid())
+    {
         m_texture->update(m_image);
+        m_displayed_field = field;
+        ++m_frame_serial;
+    }
 }
 }

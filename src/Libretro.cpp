@@ -94,6 +94,16 @@ Ref<ImageTexture> Libretro::GetVideoTexture() const
     return m_wrapper ? m_wrapper->GetVideoTexture() : Ref<ImageTexture>();
 }
 
+int Libretro::GetVideoField() const
+{
+    return m_wrapper ? static_cast<int>(m_wrapper->GetVideoField()) : 0;
+}
+
+int64_t Libretro::GetVideoFrameSerial() const
+{
+    return m_wrapper ? static_cast<int64_t>(m_wrapper->GetVideoFrameSerial()) : 0;
+}
+
 bool Libretro::HasControllerScreens() const
 {
     return m_wrapper ? m_wrapper->HasControllerScreens() : false;
@@ -795,6 +805,8 @@ void Libretro::_bind_methods()
     ClassDB::bind_method(D_METHOD("HasControllerScreens"), &Libretro::HasControllerScreens);
     ClassDB::bind_method(D_METHOD("GetControllerScreenTexture", "port", "index"), &Libretro::GetControllerScreenTexture, DEFVAL(0));
     ClassDB::bind_method(D_METHOD("GetVideoImage"), &Libretro::GetVideoImage);
+    ClassDB::bind_method(D_METHOD("GetVideoField"), &Libretro::GetVideoField);
+    ClassDB::bind_method(D_METHOD("GetVideoFrameSerial"), &Libretro::GetVideoFrameSerial);
     ClassDB::bind_method(D_METHOD("SetAudioPlaying", "playing"), &Libretro::SetAudioPlaying);
     ClassDB::bind_method(D_METHOD("SetCoreOption", "key", "value"), &Libretro::SetCoreOption);
     ClassDB::bind_method(D_METHOD("PeekCoreOptions", "root_directory", "core_name"), &Libretro::PeekCoreOptions);

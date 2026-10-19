@@ -371,6 +371,8 @@ bool EnvironmentHandler::Callback(uint32_t cmd, void* data)
     case RETRO_ENVIRONMENT_GET_CONTROLLER_DISPLAY_INTERFACE:                     return instance->m_environment_handler->GetControllerDisplayInterface(static_cast<retro_controller_display_interface*>(data), instance);
     case RETRO_ENVIRONMENT_GET_PLAYLIST_DIRECTORY:                              return EnvironmentNotImplemented(cmd);
     case RETRO_ENVIRONMENT_GET_FILE_BROWSER_START_DIRECTORY:                    return EnvironmentNotImplemented(cmd);
+    // VRT frontend extensions (vrt_libretro_ext.h). NULL data is the probe.
+    case VRT_ENVIRONMENT_SET_VIDEO_FIELD:                                       return !data || instance->m_video_handler->SetVideoField(static_cast<const vrt_video_field*>(data));
     // custom environment commands
     case RETRO_ENVIRONMENT_SET_SAVE_STATE_IN_BACKGROUND:                        return EnvironmentNotImplemented(cmd);
     case RETRO_ENVIRONMENT_GET_CLEAR_ALL_THREAD_WAITS_CB:                       return instance->m_environment_handler->GetClearAllThreadWaitsCb(static_cast<retro_environment_t*>(data));

@@ -288,6 +288,16 @@ Ref<Image> Wrapper::GetVideoImage() const
     return m_video_handler ? m_video_handler->GetImage() : Ref<Image>();
 }
 
+uint32_t Wrapper::GetVideoField() const
+{
+    return m_video_handler ? m_video_handler->GetDisplayedField() : VRT_FIELD_PROGRESSIVE;
+}
+
+uint64_t Wrapper::GetVideoFrameSerial() const
+{
+    return m_video_handler ? m_video_handler->GetFrameSerial() : 0;
+}
+
 bool Wrapper::HasControllerScreens() const
 {
     return m_controller_screens_offered.load(std::memory_order_relaxed);
@@ -776,15 +786,15 @@ Wrapper::~Wrapper()
     StopEmulationThread(true);
 }
 
-void Wrapper::CreateTexture(Image::Format image_format, PackedByteArray pixel_data, int32_t width, int32_t height, bool flip_y)
+void Wrapper::CreateTexture(Image::Format image_format, PackedByteArray pixel_data, int32_t width, int32_t height, bool flip_y, uint32_t field)
 {
     m_video_handler->SetImageFormat(image_format);
-    m_main_thread_commands_queue.enqueue(std::make_unique<ThreadCommandCreateTexture>(this, image_format, pixel_data, width, height, flip_y));
+    m_main_thread_commands_queue.enqueue(std::make_unique<ThreadCommandCreateTexture>(this, image_format, pixel_data, width, height, flip_y, field));
 }
 
-void Wrapper::UpdateTexture(PackedByteArray pixel_data, int32_t width, int32_t height, bool flip_y)
+void Wrapper::UpdateTexture(PackedByteArray pixel_data, int32_t width, int32_t height, bool flip_y, uint32_t field)
 {
-    m_main_thread_commands_queue.enqueue(std::make_unique<ThreadCommandUpdateTexture>(this, pixel_data, width, height, flip_y));
+    m_main_thread_commands_queue.enqueue(std::make_unique<ThreadCommandUpdateTexture>(this, pixel_data, width, height, flip_y, field));
 }
 
 bool Wrapper::Shutdown()
