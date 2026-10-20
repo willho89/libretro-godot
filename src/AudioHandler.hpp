@@ -303,6 +303,7 @@ private:
     float    m_audio_buffer_capacity_sec = 0;
     double   m_audio_sample_rate = 0.0;
     uint32_t m_audio_buffer_total_frames = 0;
+    uint32_t m_generator_ring = 0;   ///< fallback generator's true ring size, frames at its rate
     /// Written by the audio callback (emulation thread) and read both there and by
     /// the main thread's HUD; atomic for the same reason m_frames_produced is.
     std::atomic<uint32_t> m_audio_buffer_occupancy{0};
@@ -337,6 +338,7 @@ private:
     /// batch path, after the push, so the sample reflects the audio just added
     /// rather than the sink as it stood before it.
     void PublishBrake();
+    void AdoptGeneratorRing();
     uint32_t EffectiveTotalFrames() const;
 };
 }

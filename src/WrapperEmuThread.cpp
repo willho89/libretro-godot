@@ -763,6 +763,11 @@ void Wrapper::EmulationThreadLoop()
                     std::chrono::duration_cast<std::chrono::nanoseconds>(
                         std::chrono::steady_clock::now() - now).count()),
                     std::memory_order_relaxed);
+                // The sink set the pace this time: restart the ceiling's schedule
+                // from here, or the frames "owed" while braking would be run back
+                // to back on wake-up and the frontend would only see the last of
+                // each burst (dropped frames, judder).
+                next_call_due = std::chrono::steady_clock::now();
                 continue;
             }
 

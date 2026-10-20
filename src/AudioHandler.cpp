@@ -29,6 +29,11 @@ constexpr double k_drc_max_delta = 0.005;
 // exact, so this is not an accuracy budget; it is the guard for cores that drive
 // the single-sample callback and so never reach the batch path that publishes.
 constexpr double k_brake_sample_max_age_ms = 100.0;
+// Audio the Godot generator fallback is held at, in seconds of the core's own
+// rate. Without a target the core ran until the generator's whole ring was
+// full (Godot rounds 0.1 s up to a power of two: ~170-190 ms), so pictures led
+// their sound by that much. 50 ms keeps three frames of margin at 60 fps.
+constexpr double k_generator_target_sec = 0.05;
 
 /// Nanoseconds on the steady clock, the form SinkClock keeps its stamp in.
 int64_t SteadyNowNs()
@@ -308,12 +313,31 @@ double AudioHandler::MeasureBrakeMs() const
     if (m_audio_stream_generator_playback.is_null())
         return 0.0;
 
-    // The generator has no target of its own; treat its whole buffer as the target
-    // and wait out whatever sits above the half mark.
-    const int32_t avail = m_audio_stream_generator_playback->get_frames_available();
-    if (avail > 0)
+    // The generator has no target of its own, so hold it at k_generator_target_sec,
+    // measured at its own rate (the core's; Godot resamples to the mixer).
+    if (m_generator_ring == 0 || m_audio_stream_generator.is_null())
         return 0.0;
-    return 500.0 * static_cast<double>(m_audio_buffer_total_frames) / m_mix_rate;
+    const double gen_rate = m_audio_stream_generator->get_mix_rate();
+    if (gen_rate <= 0.0)
+        return 0.0;
+    const int32_t avail = m_audio_stream_generator_playback->get_frames_available();
+    const double queued = static_cast<double>(m_generator_ring) - static_cast<double>(avail > 0 ? avail : 0);
+    const double over = queued - k_generator_target_sec * gen_rate;
+    return over > 0.0 ? 1000.0 * over / gen_rate : 0.0;
+}
+
+
+void AudioHandler::AdoptGeneratorRing()
+{
+    // An empty generator reports its whole ring (the power-of-two size Godot
+    // picked) as available; that is the true depth the brake and occupancy use.
+    m_generator_ring = 0;
+    if (m_audio_stream_generator_playback.is_valid())
+    {
+        const int32_t avail = m_audio_stream_generator_playback->get_frames_available();
+        m_generator_ring = avail > 0 ? static_cast<uint32_t>(avail) : 0;
+    }
+    m_audio_buffer_total_frames = m_generator_ring;
 }
 
 
@@ -321,7 +345,8 @@ void AudioHandler::PublishBrake()
 {
     const double brake = MeasureBrakeMs();
     // Only a voice ring has a target to be over or under: see SinkClock::paces.
-    m_clock->Publish(brake, SteadyNowNs(), m_use_sdk && m_sink_target_frames > 0);
+    const bool paces = m_use_sdk ? m_sink_target_frames > 0 : m_generator_ring > 0;
+    m_clock->Publish(brake, SteadyNowNs(), paces);
 }
 
 double AudioHandler::MsUntilSinkWantsFrames() const
@@ -522,6 +547,7 @@ void AudioHandler::Init(float buffer_capacity_sec, double sample_rate)
         player->stop();
         return;
     }
+    AdoptGeneratorRing();
     m_sink_ready.store(true, std::memory_order_release);
     const bool playing = m_playing.load(std::memory_order_relaxed);
     if (!playing || m_audio_sample_rate <= 0.0)
@@ -562,6 +588,7 @@ bool AudioHandler::ReinitSampleRate(double sample_rate)
         m_audio_buffer_occupancy.store(0, std::memory_order_relaxed);
         m_last_brake_ms.store(0.0, std::memory_order_relaxed);
         m_audio_buffer_total_frames = 0;
+        m_generator_ring = 0;
         m_in_float.clear();
         m_out_float.clear();
         return true;
@@ -651,6 +678,8 @@ bool AudioHandler::ReinitSampleRate(double sample_rate)
     m_audio_buffer_occupancy.store(0, std::memory_order_relaxed);
     m_last_brake_ms.store(0.0, std::memory_order_relaxed);
     m_audio_buffer_total_frames = 0;
+    if (!m_use_sdk)
+        AdoptGeneratorRing();
     m_in_float.clear();
     m_out_float.clear();
     m_accept_audio.store(m_playing.load(std::memory_order_relaxed) && sample_rate > 0.0,
