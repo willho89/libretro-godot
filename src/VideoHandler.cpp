@@ -870,7 +870,8 @@ bool VideoHandler::SetVideoField(const vrt_video_field* field)
 {
     if (field->field > VRT_FIELD_BOTTOM)
         return false;
-    if (field->field != m_field)
+    // Log entering/leaving field mode only; parity alternates every field.
+    if ((field->field == VRT_FIELD_PROGRESSIVE) != (m_field == VRT_FIELD_PROGRESSIVE))
         Log("VRT video field: " + std::to_string(field->field) + " (" +
             std::to_string(field->frame_lines) + " frame lines)");
     m_field = field->field;
