@@ -1,5 +1,6 @@
 #pragma once
 
+#include <atomic>
 #include <godot_cpp/classes/image_texture.hpp>
 
 #include <cstdint>
@@ -178,6 +179,12 @@ private:
     unsigned m_last_geom_w = 0;
     unsigned m_last_geom_h = 0;
     float    m_last_geom_aspect = 0.0f;
+    /// The display aspect the core last declared (0 = unknown: use the frame's).
+    std::atomic<float> m_declared_aspect{0.0f};
+public:
+    void NoteDeclaredAspect(float a) { m_declared_aspect.store(a, std::memory_order_relaxed); }
+    float DeclaredAspect() const { return m_declared_aspect.load(std::memory_order_relaxed); }
+private:
 
     void QueueFrame(Wrapper* wrapper, godot::PackedByteArray pixel_data,
                     uint32_t width, uint32_t height, bool flip_y);

@@ -505,6 +505,8 @@ public:
     ///
     /// The core's declared timing, and how far behind the picture is:
     double GetDeclaredFps() const;
+    /// Display aspect ratio the core declared (geometry.aspect_ratio; 0 = none).
+    double GetDeclaredAspect() const;
     double GetDeclaredSampleRate() const;
     /// Frames produced but never shown, because a newer one replaced them before
     /// the main thread drained the queue. Resets with each content run.

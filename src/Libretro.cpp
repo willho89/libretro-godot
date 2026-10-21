@@ -540,6 +540,11 @@ Dictionary Libretro::GetCoreIdentity() const
     return m_wrapper ? m_wrapper->GetCoreIdentity() : Dictionary();
 }
 
+double Libretro::GetDeclaredAspect() const
+{
+    return (m_wrapper && m_wrapper->m_video_handler) ? m_wrapper->m_video_handler->DeclaredAspect() : 0.0;
+}
+
 double Libretro::GetDeclaredFps() const
 {
     return m_wrapper->GetDeclaredFps();
@@ -866,6 +871,7 @@ void Libretro::_bind_methods()
     ClassDB::bind_method(D_METHOD("GetNetplayRollbackCount"), &Libretro::GetNetplayRollbackCount);
     ClassDB::bind_method(D_METHOD("GetNetplayRollbackStats"), &Libretro::GetNetplayRollbackStats);
     ClassDB::bind_method(D_METHOD("GetDeclaredFps"), &Libretro::GetDeclaredFps);
+    ClassDB::bind_method(D_METHOD("GetDeclaredAspect"), &Libretro::GetDeclaredAspect);
     ClassDB::bind_method(D_METHOD("GetDeclaredSampleRate"), &Libretro::GetDeclaredSampleRate);
     ClassDB::bind_method(D_METHOD("GetDroppedFrameCount"), &Libretro::GetDroppedFrameCount);
     ClassDB::bind_method(D_METHOD("GetAudioBufferOccupancy"), &Libretro::GetAudioBufferOccupancy);

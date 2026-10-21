@@ -540,6 +540,8 @@ void Wrapper::EmulationThreadLoop()
     // the frontend's back, and the HUD compares measured against DECLARED, so it
     // has to be the figure this loop is actually pacing to.
     m_declared_fps.store(m_system_av_info.timing.fps, std::memory_order_relaxed);
+    if (m_video_handler)
+        m_video_handler->NoteDeclaredAspect(m_system_av_info.geometry.aspect_ratio);
     m_declared_sample_rate.store(m_system_av_info.timing.sample_rate, std::memory_order_relaxed);
     m_dropped_frames.store(0, std::memory_order_relaxed);
     m_run_ns.store(0, std::memory_order_relaxed);

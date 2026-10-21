@@ -749,6 +749,7 @@ bool VideoHandler::SetGeometry(const retro_game_geometry* geometry)
 
     if (!geometry)
         return true;
+    NoteDeclaredAspect(geometry->aspect_ratio);
 
     // A core may re-report unchanged geometry repeatedly (azahar does so when the
     // R button toggles its layout), which produced an identical log each time.
