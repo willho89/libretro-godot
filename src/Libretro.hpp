@@ -507,6 +507,9 @@ public:
     double GetDeclaredFps() const;
     /// Display aspect ratio the core declared (geometry.aspect_ratio; 0 = none).
     double GetDeclaredAspect() const;
+    /// False once content has stopped, including when the core shut itself
+    /// down (RETRO_ENVIRONMENT_SHUTDOWN, e.g. a video reaching its end).
+    bool IsRunning() const;
     double GetDeclaredSampleRate() const;
     /// Frames produced but never shown, because a newer one replaced them before
     /// the main thread drained the queue. Resets with each content run.
